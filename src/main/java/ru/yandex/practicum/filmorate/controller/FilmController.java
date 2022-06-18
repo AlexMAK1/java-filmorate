@@ -4,11 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.FilmIdGenerator;
-import ru.yandex.practicum.filmorate.model.ValidationException;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
@@ -17,73 +16,47 @@ import java.util.*;
 @RequestMapping("/films")
 public class FilmController {
 
-    private final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
-    private final Map<Integer, Film> films = new HashMap<>();
-    private final FilmIdGenerator filmIdGenerator;
+    private final FilmService filmService;
 
     @Autowired
-    public FilmController(FilmIdGenerator filmIdGenerator) {
-        this.filmIdGenerator = filmIdGenerator;
-    }
-
-    public Film getFilm(int id) {
-        return films.get(id);
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
     }
 
     @GetMapping
     public Collection<Film> findAll() {
-        log.info("Текущее количество фильмов: {}", films.size());
-        return films.values();
+        log.info("Текущее количество фильмов: {}", filmService.getInMemoryFilmStorage().getFilms().size());
+        return filmService.getInMemoryFilmStorage().getFilms().values();
     }
 
     @PostMapping
     public Film create(@RequestBody Film film) {
-        int newId = filmIdGenerator.generate();
-        film.setId(newId);
-        validation(film);
         log.info("Сохраняем новый фильм: {}", film);
-        films.put(newId, film);
-        return film;
+        return filmService.getInMemoryFilmStorage().create(film);
     }
 
     @PutMapping
     public Film saveFilm(@RequestBody Film film) {
-        if (film.getId() < 0) {
-            log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", film.getId());
-            throw new ValidationException();
-        }
-        for (Film oldFilm : films.values()) {
-            if (oldFilm.getId() == film.getId()) {
-                oldFilm.setName(film.getName());
-                oldFilm.setDescription(film.getDescription());
-                oldFilm.setReleaseDate(film.getReleaseDate());
-                oldFilm.setDuration(film.getDuration());
-                log.info("Обновляем фильм: {}", oldFilm);
-                return oldFilm;
-            }
-        }
-        log.info("Добовляем новый фильм: {}", film);
-        return film;
+        return filmService.getInMemoryFilmStorage().update(film);
     }
 
-    private void validation(Film film) {
-        int len = film.getDescription().length();
+    @PutMapping("{id}/like/{userId}")
+    public void addLike(@PathVariable("id") long id, @PathVariable("userID") long userId) {
+         filmService.addLike(id, userId);
+    }
 
-        if (film.getName().isEmpty()) {
-            log.error("Ошибка, валидация не пройдена. Название фильма не может быть пустым: {}", film.getName());
-            throw new ValidationException();
+    @DeleteMapping("{id}/like/{userId}")
+    public void deleteLike(@PathVariable("id") long id, @PathVariable("userID") long userId) {
+         filmService.deleteLike(id, userId);
+    }
+
+    @GetMapping("popular?count={count}")
+    public List<Film> findPopularFilms(
+            @RequestParam(defaultValue = "10", required = false) Integer count
+    ) {
+        if (count <= 0) {
+            throw new IncorrectParameterException("size");
         }
-        if (len > 200) {
-            log.error("Ошибка, валидация не пройдена. Максимальная длина описания должна быть не больше 200 символов: {}", film.getDescription());
-            throw new ValidationException();
-        }
-        if (film.getReleaseDate().isBefore(EARLIEST_RELEASE_DATE)) {
-            log.error("Ошибка, валидация не пройдена. Дата релиза должна быть не раньше 28 декабря 1895 года: {}", film.getReleaseDate());
-            throw new ValidationException();
-        }
-        if (film.getDuration() < 0) {
-            log.error("Ошибка, валидация не пройдена. Продолжительность фильма должна быть положительной: {}", film.getDuration());
-            throw new ValidationException();
-        }
+        return filmService.getPopularFilms(count);
     }
 }

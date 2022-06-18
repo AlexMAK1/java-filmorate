@@ -4,10 +4,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class FilmIdGenerator {
-    private int id = 0;
+    private long id = 0L;
 
-    public int generate() {
-        id = id + 1;
+    public long generate() {
+        id = id + 1L;
         return id;
     }
 }
