@@ -20,29 +20,59 @@ class FilmControllerTest {
 
     @Test
     void findAll(){
-        Film film = new Film("nisi eiusmod", "adipisicing", LocalDate.of(1967, 03, 25), 100, Set.of(1L, 2L, 3L));
+        Film film = new Film();
+        film.setName("nisi eiusmod");
+        film.setDescription("adipisicing");
+        film.setReleaseDate(LocalDate.of(1967, 03, 25));
+        film.setDuration(100);
+        film.setLikes(Set.of(1L, 2L, 3L));
         filmController.create(film);
         assertEquals(1, filmController.findAll().size(), "Коллекция пуста");
     }
 
     @Test
     void create(){
-        Film film = new Film("nisi eiusmod", "adipisicing", LocalDate.of(1967, 03, 25), 100, Set.of(1L, 2L, 3L));
-        Film testFilm = new Film("nisi eiusmod", "adipisicing", LocalDate.of(1967, 03, 25), 100, Set.of(1L, 2L, 3L));
+        Film film = new Film();
+        film.setName("nisi eiusmod");
+        film.setDescription("adipisicing");
+        film.setReleaseDate(LocalDate.of(1967, 03, 25));
+        film.setDuration(100);
+        film.setLikes(Set.of(1L, 2L, 3L));
         filmController.create(film);
+        Film testFilm = new Film();
+        testFilm.setName("nisi eiusmod");
+        testFilm.setDescription("adipisicing");
+        testFilm.setReleaseDate(LocalDate.of(1967, 03, 25));
+        testFilm.setDuration(100);
+        testFilm.setLikes(Set.of(1L, 2L, 3L));
         testFilm.setId(film.getId());
         assertEquals(testFilm, inMemoryFilmStorage.getFilm(film.getId()), "Фильм не добавлен");
     }
 
     @Test
     void saveFilm(){
-        Film film1 = new Film("nisi eiusmod", "adipisicing", LocalDate.of(1967, 03, 25), 100, Set.of(1L, 2L, 3L));
-        filmController.create(film1);
-        Film film2 = new Film("terminator", "action", LocalDate.of(1967, 03, 25), 777, Set.of(1L, 2L, 5L));
-        film2.setId(film1.getId());
+        Film film = new Film();
+        film.setName("nisi eiusmod");
+        film.setDescription("adipisicing");
+        film.setReleaseDate(LocalDate.of(1967, 03, 25));
+        film.setDuration(100);
+        film.setLikes(Set.of(1L, 2L, 3L));
+        filmController.create(film);
+        Film film2 = new Film();
+        film2.setName("terminator");
+        film2.setDescription("action");
+        film2.setReleaseDate(LocalDate.of(1967, 03, 25));
+        film2.setDuration(120);
+        film2.setLikes(Set.of(7L, 4L, 8L));
+        film2.setId(film.getId());
         filmController.saveFilm(film2);
-        Film testFilm = new Film("terminator", "action", LocalDate.of(1967, 03, 25), 777, Set.of(1L, 2L, 5L));
-        testFilm.setId(film1.getId());
+        Film testFilm = new Film();
+        testFilm.setName("terminator");
+        testFilm.setDescription("action");
+        testFilm.setReleaseDate(LocalDate.of(1967, 03, 25));
+        testFilm.setDuration(120);
+        testFilm.setLikes(Set.of(7L, 4L, 8L));
+        testFilm.setId(film.getId());
         assertEquals(testFilm, inMemoryFilmStorage.getFilm(film2.getId()), "Фильм не добавлен");
     }
 }

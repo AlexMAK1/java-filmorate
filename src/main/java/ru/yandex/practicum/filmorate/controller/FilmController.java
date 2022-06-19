@@ -40,14 +40,14 @@ public class FilmController {
         return filmService.getInMemoryFilmStorage().update(film);
     }
 
-    @PutMapping("{id}/like/{userId}")
+    @PutMapping("/{id}/like/{userId}")
     public void addLike(@PathVariable("id") long id, @PathVariable("userID") long userId) {
-         filmService.addLike(id, userId);
+        filmService.addLike(id, userId);
     }
 
-    @DeleteMapping("{id}/like/{userId}")
+    @DeleteMapping("/{id}/like/{userId}")
     public void deleteLike(@PathVariable("id") long id, @PathVariable("userID") long userId) {
-         filmService.deleteLike(id, userId);
+        filmService.deleteLike(id, userId);
     }
 
     @GetMapping("popular?count={count}")

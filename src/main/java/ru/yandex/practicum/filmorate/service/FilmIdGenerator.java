@@ -7,7 +7,6 @@ public class FilmIdGenerator {
     private long id = 0L;
 
     public long generate() {
-        id = id + 1L;
-        return id;
+        return id = id +1L;
     }
 }

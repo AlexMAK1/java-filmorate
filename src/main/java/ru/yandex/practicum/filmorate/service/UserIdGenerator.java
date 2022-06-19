@@ -4,10 +4,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserIdGenerator {
-    private long id = 0;
+    private long id = 0L;
 
     public long generate() {
-        id = id + 1;
-        return id;
+        return id = id +1L;
     }
 }

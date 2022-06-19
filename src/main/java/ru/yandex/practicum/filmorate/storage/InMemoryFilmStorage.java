@@ -30,14 +30,18 @@ public class InMemoryFilmStorage implements FilmStorage{
     }
 
     public Film getFilm(long id) {
+        if (id < 0) {
+            log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", id);
+            throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
+        }
         return films.get(id);
     }
 
     @Override
     public Film create(Film film) {
+        validation(film);
         long newId = filmIdGenerator.generate();
         film.setId(newId);
-        validation(film);
         films.put(newId, film);
         return film;
     }
