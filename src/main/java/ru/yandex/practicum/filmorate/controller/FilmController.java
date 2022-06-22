@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.*;
@@ -29,6 +30,11 @@ public class FilmController {
         return filmService.getInMemoryFilmStorage().getFilms().values();
     }
 
+    @GetMapping("{id}")
+    public Film getFilm(@PathVariable("id") long id) {
+        return filmService.getInMemoryFilmStorage().getFilm(id);
+    }
+
     @PostMapping
     public Film create(@RequestBody Film film) {
         log.info("Сохраняем новый фильм: {}", film);
@@ -41,22 +47,22 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable("id") long id, @PathVariable("userID") long userId) {
+    public void addLike(@PathVariable("id") long id, @PathVariable("userId") long userId) {
         filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void deleteLike(@PathVariable("id") long id, @PathVariable("userID") long userId) {
+    public void deleteLike(@PathVariable("id") long id, @PathVariable("userId") long userId) {
         filmService.deleteLike(id, userId);
     }
 
-    @GetMapping("popular?count={count}")
-    public List<Film> findPopularFilms(
-            @RequestParam(defaultValue = "10", required = false) Integer count
+    @GetMapping("/popular")
+    public List<Film> findCountPopularFilms(
+            @RequestParam(defaultValue = "10") Long count
     ) {
         if (count <= 0) {
-            throw new IncorrectParameterException("size");
+            throw new IncorrectParameterException("count");
         }
-        return filmService.getPopularFilms(count);
+        return filmService.getCountPopularFilms(count);
     }
 }

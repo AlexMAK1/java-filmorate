@@ -50,11 +50,6 @@ public class InMemoryUserStorage implements UserStorage{
     }
 
     @Override
-    public void delete(long id) {
-
-    }
-
-    @Override
     public User update(User user) {
         if (user.getId() < 0) {
             log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", user.getId());

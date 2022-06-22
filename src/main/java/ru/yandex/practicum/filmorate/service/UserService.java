@@ -33,6 +33,7 @@ public class UserService {
         User otherUser = findUserById(friendId);
         user.getFriends().add(friendId);
         otherUser.getFriends().add(id);
+        log.info("Добавляем в список друзей");
     }
 
     public User findUserById(Long id) {
@@ -47,6 +48,7 @@ public class UserService {
         User user = findUserById(id);
         User otherUser = findUserById(friendId);
         user.getFriends().remove(friendId);
+        log.info("Удаляем пользователя из списка друзей: {}", id);
         otherUser.getFriends().remove(id);
     }
 
@@ -58,22 +60,22 @@ public class UserService {
         for (long i : friendsId) {
             friends.add(inMemoryUserStorage.getUser(i));
         }
+        log.info("Находим друзей пользователя: {}", friends);
         return friends;
     }
 
     public List<User> getCommonFriends(long id, long otherId) {
+        findUserById(id);
+        findUserById(otherId);
         List<User> commonFriends = new ArrayList<>();
-        if (!inMemoryUserStorage.getUser(id).getFriends().contains(otherId)) {
-            log.error("Ошибка, такого пользователя в списке общих друзей нет: {}", otherId);
-            return commonFriends;
-        }
-        for (long i : inMemoryUserStorage.getUser(id).getFriends()) {
-            for (long t : inMemoryUserStorage.getUser(otherId).getFriends()) {
-                if (i == t) {
-                    commonFriends.add(inMemoryUserStorage.getUser(i));
-                }
+        Set<Long> userFriends = inMemoryUserStorage.getUser(id).getFriends();
+        for (long i : inMemoryUserStorage.getUser(otherId).getFriends()) {
+            if (userFriends.contains(i)) {
+                commonFriends.add(inMemoryUserStorage.getUser(i));
             }
         }
+        log.info("Находим список общих друзей: {}", commonFriends);
         return commonFriends;
     }
 }
+

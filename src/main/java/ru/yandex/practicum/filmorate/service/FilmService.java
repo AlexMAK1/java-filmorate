@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -35,28 +36,30 @@ public class FilmService {
             log.error("Ошибка, такого фидьиа нет: {}", id);
             throw new NotFoundException("Ошибка, такого фильма нет");
         }
+        log.info("Находим фильм {}", id);
         return inMemoryFilmStorage.getFilm(id);
     }
 
     public void deleteLike(long id, long userId) {
+        if (id < 0 || userId < 0) {
+            log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", userId);
+            throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
+        }
         Film film = findFilmById(id);
         log.info("Удаляем лайк у фильма {}", id);
         film.getLikes().remove(userId);
     }
 
-    public List<Film> getPopularFilms(long count) {
-        List<Film> popularFilms = new ArrayList<>((Collection<? extends Film>) Comparator.comparing(Film::getSize));
-        if (count == Integer.parseInt(null)) {
-            List<Film> filmList = new ArrayList<>();
-            for (int i = 0; i < 10; i++) {
-                filmList.add(popularFilms.get(i));
-            }
-            return filmList;
-        }
-        List<Film> countFilmList = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            countFilmList.add(popularFilms.get(i));
-        }
-        return countFilmList;
+    public List<Film> getCountPopularFilms(Long count) {
+        List<Film> popularFilms = new ArrayList<>(inMemoryFilmStorage.getFilms().values());
+        return popularFilms
+                .stream()
+                .sorted(this::compare)
+                .limit(count)
+                .collect(Collectors.toList());
+    }
+
+    private int compare(Film a, Film b) {
+        return b.getLikes().size() - a.getLikes().size();
     }
 }

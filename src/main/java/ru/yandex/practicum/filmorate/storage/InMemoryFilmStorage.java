@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class InMemoryFilmStorage implements FilmStorage{
+public class InMemoryFilmStorage implements FilmStorage {
 
     private final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private final Map<Long, Film> films = new HashMap<>();
@@ -43,12 +43,8 @@ public class InMemoryFilmStorage implements FilmStorage{
         long newId = filmIdGenerator.generate();
         film.setId(newId);
         films.put(newId, film);
+        log.info("Сохраняем новый фильм: {}", film);
         return film;
-    }
-
-    @Override
-    public void delete(int id) {
-
     }
 
     @Override
