@@ -7,6 +7,6 @@ public class UserIdGenerator {
     private long id = 0L;
 
     public long generate() {
-        return id = id +1L;
+        return ++id;
     }
 }

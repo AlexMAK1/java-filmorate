@@ -5,10 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.UserIdGenerator;
+import ru.yandex.practicum.filmorate.service.UserValidationService;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,16 +17,21 @@ public class InMemoryUserStorage implements UserStorage{
 
     private final Map<Long, User> users = new HashMap<>();
     private final UserIdGenerator userIdGenerator;
+    private final UserValidationService userValidationService;
 
     @Autowired
-    public InMemoryUserStorage(UserIdGenerator userIdGenerator) {
+    public InMemoryUserStorage(UserIdGenerator userIdGenerator, UserValidationService userValidationService) {
         this.userIdGenerator = userIdGenerator;
+        this.userValidationService = userValidationService;
     }
 
+    @Override
     public Map<Long, User> getUsers() {
-        return users;
+        Map<Long, User> newUsers = users;
+        return newUsers;
     }
 
+    @Override
     public User getUser(long id) {
         if (id < 0) {
             log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", id);
@@ -41,7 +45,7 @@ public class InMemoryUserStorage implements UserStorage{
         if (user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }
-        validation(user);
+        userValidationService.validation(user);
         long newId = userIdGenerator.generate();
         user.setId(newId);
         log.info("Сохраняем нового пользователя: {}", user);
@@ -57,13 +61,9 @@ public class InMemoryUserStorage implements UserStorage{
         }
         for (User oldUser : users.values()) {
             if (oldUser.getId() == user.getId()) {
-                oldUser.setEmail(user.getEmail());
-                oldUser.setLogin(user.getLogin());
-                oldUser.setName(user.getName());
-                oldUser.setBirthday(user.getBirthday());
-                oldUser.setFriends(user.getFriends());
-                log.info("Обновляем данные пользователя: {}", oldUser);
-                return oldUser;
+                users.put(user.getId(), user);
+                log.info("Обновляем данные пользователя: {}", user);
+                return user;
             }
         }
         long newId = userIdGenerator.generate();
@@ -71,22 +71,5 @@ public class InMemoryUserStorage implements UserStorage{
         log.info("Добовляем пользователя: {}", user);
         users.put(newId, user);
         return user;
-    }
-
-    private void validation(User user) {
-        LocalDate currentMoment = LocalDate.now();
-
-        if (!user.getEmail().contains("@") || user.getEmail().isEmpty()) {
-            log.error("Ошибка, валидация не пройдена. Электронная почта не может быть пустой и должна содержать символ @: {}", user.getEmail());
-            throw new ValidationException("Ошибка, валидация не пройдена. Электронная почта не может быть пустой и должна содержать символ @.");
-        }
-        if (user.getLogin().isEmpty() && user.getLogin().contains(" ")) {
-            log.error("Ошибка, валидация не пройдена. Логин не может быть пустым и содержать пробелы: {}", user.getLogin());
-            throw new ValidationException("Ошибка, валидация не пройдена. Логин не может быть пустым и содержать пробелы.");
-        }
-        if (user.getBirthday().isAfter(currentMoment)) {
-            log.error("Ошибка, валидация не пройдена. Дата рождения не может быть в будущем: {}", user.getBirthday());
-            throw new ValidationException("Ошибка, валидация не пройдена. Дата рождения не может быть в будущем.");
-        }
     }
 }

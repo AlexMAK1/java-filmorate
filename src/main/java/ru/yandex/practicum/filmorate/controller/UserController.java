@@ -16,7 +16,6 @@ import java.util.List;
 @RequestMapping("/users")
 public class UserController {
 
-
     private final UserService userService;
 
     @Autowired
@@ -26,23 +25,23 @@ public class UserController {
 
     @GetMapping
     public Collection<User> findAll() {
-        log.info("Текущее количество пользователей: {}", userService.getInMemoryUserStorage().getUsers().size());
-        return userService.getInMemoryUserStorage().getUsers().values();
+        log.info("Текущее количество пользователей: {}", userService.getUsers().size());
+        return userService.getUsers().values();
     }
 
     @GetMapping("{id}")
     public User getUser(@PathVariable("id") long id) {
-        return userService.getInMemoryUserStorage().getUser(id);
+        return userService.getUser(id);
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
-        return userService.getInMemoryUserStorage().create(user);
+        return userService.create(user);
     }
 
     @PutMapping
     public User saveUser(@RequestBody User user) {
-        return userService.getInMemoryUserStorage().update(user);
+        return userService.update(user);
     }
 
     @PutMapping("/{id}/friends/{friendId}")

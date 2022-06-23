@@ -5,10 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.FilmIdGenerator;
+import ru.yandex.practicum.filmorate.service.FilmValidationService;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,19 +15,23 @@ import java.util.Map;
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
 
-    private final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private final Map<Long, Film> films = new HashMap<>();
     private final FilmIdGenerator filmIdGenerator;
-
-    public Map<Long, Film> getFilms() {
-        return films;
-    }
+    private final FilmValidationService filmValidationService;
 
     @Autowired
-    public InMemoryFilmStorage(FilmIdGenerator filmIdGenerator) {
+    public InMemoryFilmStorage(FilmIdGenerator filmIdGenerator, FilmValidationService filmValidationService) {
         this.filmIdGenerator = filmIdGenerator;
+        this.filmValidationService = filmValidationService;
     }
 
+    @Override
+    public Map<Long, Film> getFilms() {
+        Map<Long, Film> newFilms = films;
+        return newFilms;
+    }
+
+    @Override
     public Film getFilm(long id) {
         if (id < 0) {
             log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", id);
@@ -39,7 +42,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
-        validation(film);
+        filmValidationService.validation(film);
         long newId = filmIdGenerator.generate();
         film.setId(newId);
         films.put(newId, film);
@@ -55,37 +58,15 @@ public class InMemoryFilmStorage implements FilmStorage {
         }
         for (Film oldFilm : films.values()) {
             if (oldFilm.getId() == film.getId()) {
-                oldFilm.setName(film.getName());
-                oldFilm.setDescription(film.getDescription());
-                oldFilm.setReleaseDate(film.getReleaseDate());
-                oldFilm.setDuration(film.getDuration());
-                oldFilm.setLikes(film.getLikes());
-                log.info("Обновляем фильм: {}", oldFilm);
-                return oldFilm;
+                films.put(film.getId(), film);
+                log.info("Обновляем существующий фильм: {}", film);
+                return film;
             }
         }
+        long newId = filmIdGenerator.generate();
+        film.setId(newId);
+        films.put(newId, film);
         log.info("Добовляем новый фильм: {}", film);
         return film;
-    }
-
-    private void validation(Film film) {
-        int len = film.getDescription().length();
-
-        if (film.getName().isEmpty()) {
-            log.error("Ошибка, валидация не пройдена. Название фильма не может быть пустым: {}", film.getName());
-            throw new ValidationException("Ошибка, валидация не пройдена. Название фильма не может быть пустым.");
-        }
-        if (len > 200) {
-            log.error("Ошибка, валидация не пройдена. Максимальная длина описания должна быть не больше 200 символов: {}", film.getDescription());
-            throw new ValidationException("Ошибка, валидация не пройдена. Максимальная длина описания должна быть не больше 200 символов.");
-        }
-        if (film.getReleaseDate().isBefore(EARLIEST_RELEASE_DATE)) {
-            log.error("Ошибка, валидация не пройдена. Дата релиза должна быть не раньше 28 декабря 1895 года: {}", film.getReleaseDate());
-            throw new ValidationException("Ошибка, валидация не пройдена. Дата релиза должна быть не раньше 28 декабря 1895 года.");
-        }
-        if (film.getDuration() < 0) {
-            log.error("Ошибка, валидация не пройдена. Продолжительность фильма должна быть положительной: {}", film.getDuration());
-            throw new ValidationException("Ошибка, валидация не пройдена. Продолжительность фильма должна быть положительной.");
-        }
     }
 }

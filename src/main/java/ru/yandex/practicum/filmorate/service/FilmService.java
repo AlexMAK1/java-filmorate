@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -14,15 +14,27 @@ import java.util.stream.Collectors;
 @Service
 public class FilmService {
 
-    private final InMemoryFilmStorage inMemoryFilmStorage;
-
-    public InMemoryFilmStorage getInMemoryFilmStorage() {
-        return inMemoryFilmStorage;
-    }
+    private final FilmStorage filmStorage;
 
     @Autowired
-    public FilmService(InMemoryFilmStorage inMemoryFilmStorage) {
-        this.inMemoryFilmStorage = inMemoryFilmStorage;
+    public FilmService(FilmStorage filmStorage) {
+        this.filmStorage = filmStorage;
+    }
+
+    public Film getById(long id) {
+        return filmStorage.getFilm(id);
+    }
+
+    public Map<Long, Film> getFilms() {
+        return filmStorage.getFilms();
+    }
+
+    public Film create(Film film) {
+        return filmStorage.create(film);
+    }
+
+    public Film update(Film film) {
+    return filmStorage.update(film);
     }
 
     public void addLike(long id, long userId) {
@@ -32,12 +44,12 @@ public class FilmService {
     }
 
     public Film findFilmById(Long id) {
-        if (!inMemoryFilmStorage.getFilms().containsKey(id)) {
+        if (!filmStorage.getFilms().containsKey(id)) {
             log.error("Ошибка, такого фидьиа нет: {}", id);
             throw new NotFoundException("Ошибка, такого фильма нет");
         }
         log.info("Находим фильм {}", id);
-        return inMemoryFilmStorage.getFilm(id);
+        return filmStorage.getFilm(id);
     }
 
     public void deleteLike(long id, long userId) {
@@ -51,7 +63,7 @@ public class FilmService {
     }
 
     public List<Film> getCountPopularFilms(Long count) {
-        List<Film> popularFilms = new ArrayList<>(inMemoryFilmStorage.getFilms().values());
+        List<Film> popularFilms = new ArrayList<>(filmStorage.getFilms().values());
         return popularFilms
                 .stream()
                 .sorted(this::compare)
