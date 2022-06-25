@@ -27,8 +27,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Map<Long, Film> getFilms() {
-        Map<Long, Film> newFilms = films;
-        return newFilms;
+        return new HashMap<>(films);
     }
 
     @Override

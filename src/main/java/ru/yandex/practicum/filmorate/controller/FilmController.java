@@ -16,7 +16,7 @@ import java.util.*;
 @RequestMapping("/films")
 public class FilmController {
 
-    private final String countValue = "10";
+    private static final String DEFAULT_FILMS_AMOUNT = "10";
     private final FilmService filmService;
 
     @Autowired
@@ -58,7 +58,7 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> findCountPopularFilms(
-            @RequestParam(defaultValue = countValue) Long count
+            @RequestParam(defaultValue = DEFAULT_FILMS_AMOUNT) Long count
     ) {
         if (count <= 0) {
             throw new IncorrectParameterException("count");
