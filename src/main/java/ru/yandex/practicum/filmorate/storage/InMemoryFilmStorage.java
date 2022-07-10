@@ -41,6 +41,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
+
         filmValidationService.validation(film);
         long newId = filmIdGenerator.generate();
         film.setId(newId);
