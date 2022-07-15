@@ -2,19 +2,13 @@ package ru.yandex.practicum.filmorate.model;
 
 import lombok.*;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
 @ToString
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
-    private long id;
-    private String email;
-    private String login;
+public class Mpa {
+    private int id;
     private String name;
-    private LocalDate birthday;
-
 }

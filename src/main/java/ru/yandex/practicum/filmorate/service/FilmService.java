@@ -7,9 +7,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,7 +24,7 @@ public class FilmService {
         return filmStorage.getFilm(id);
     }
 
-    public Map<Long, Film> getFilms() {
+    public List <Film> getFilms() {
         return filmStorage.getFilms();
     }
 
@@ -41,12 +39,12 @@ public class FilmService {
     public void addLike(long id, long userId) {
         Film film = findFilmById(id);
         log.info("Добавляем лайк фильму {}", id);
-        film.getLikes().add(userId);
+
     }
 
     public Film findFilmById(Long id) {
-        if (!filmStorage.getFilms().containsKey(id)) {
-            log.error("Ошибка, такого фидьиа нет: {}", id);
+        if (filmStorage.getFilms().isEmpty()) {
+            log.error("Ошибка, такого фильма нет: {}", id);
             throw new NotFoundException("Ошибка, такого фильма нет");
         }
         log.info("Находим фильм {}", id);
@@ -60,19 +58,11 @@ public class FilmService {
         }
         Film film = findFilmById(id);
         log.info("Удаляем лайк у фильма {}", id);
-        film.getLikes().remove(userId);
+
     }
 
     public List<Film> getCountPopularFilms(Long count) {
-        List<Film> popularFilms = new ArrayList<>(filmStorage.getFilms().values());
-        return popularFilms
-                .stream()
-                .sorted(this::compare)
-                .limit(count)
-                .collect(Collectors.toList());
-    }
-
-    private int compare(Film a, Film b) {
-        return b.getLikes().size() - a.getLikes().size();
+        List<Film> popularFilms = new ArrayList<>(filmStorage.getFilms());
+        return popularFilms;
     }
 }

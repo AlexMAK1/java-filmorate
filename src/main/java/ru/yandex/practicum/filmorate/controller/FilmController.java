@@ -27,7 +27,7 @@ public class FilmController {
     @GetMapping
     public Collection<Film> findAll() {
         log.info("Текущее количество фильмов: {}", filmService.getFilms().size());
-        return filmService.getFilms().values();
+        return filmService.getFilms();
     }
 
     @GetMapping("{id}")

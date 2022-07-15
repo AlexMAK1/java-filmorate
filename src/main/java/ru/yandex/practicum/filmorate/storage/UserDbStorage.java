@@ -2,11 +2,9 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -15,14 +13,11 @@ import ru.yandex.practicum.filmorate.service.UserValidationService;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
-@Component
-@Primary
+@Repository
 public class UserDbStorage implements UserStorage {
 
-    @Autowired
     private final JdbcTemplate jdbcTemplate;
 
     private final UserValidationService userValidationService;
@@ -38,11 +33,12 @@ public class UserDbStorage implements UserStorage {
         if (user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }
+        userValidationService.validation(user);
         String sqlQuery = "insert into USERS (EMAIL, LOGIN, USER_NAME, BIRTHDAY ) values (?, ?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
-            PreparedStatement stmt = connection.prepareStatement(sqlQuery, new String[]{"id"});
+            PreparedStatement stmt = connection.prepareStatement(sqlQuery, new String[]{"USER_ID"});
             stmt.setString(1, user.getEmail());
             stmt.setString(2, user.getLogin());
             stmt.setString(3, user.getName());
@@ -83,12 +79,48 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public Map<Long, User> getUsers() {
-        return null;
+    public List<User> getUsers() {
+        final String sqlQuery = "select * from USERS";
+        final List<User> users = jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser);
+        return users;
     }
 
     @Override
     public User update(User user) {
-        return null;
+        if (user.getId() < 0) {
+            log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", user.getId());
+            throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
+        }
+        String sqlQuery = "update USERS set " + "EMAIL = ?, LOGIN = ?, USER_NAME = ?, BIRTHDAY = ? " + "where USER_ID = ?";
+        jdbcTemplate.update(sqlQuery
+                , user.getEmail()
+                , user.getLogin()
+                , user.getName()
+                , user.getBirthday()
+                , user.getId());
+        log.info("Добовляем пользователя: {}", user);
+        return user;
+    }
+
+    @Override
+    public void addFriend(long id, long friendId) {
+        String sqlQuery = "INSERT INTO FRIENDS (USER_ID, FRIEND_ID) values (?, ?)" ;
+        jdbcTemplate.update(sqlQuery,id, friendId);
+    }
+
+    @Override
+    public void deleteFriend(long id, long friendId) {
+        String sqlQuery = "DELETE FROM  FRIENDS WHERE USER_ID = ? AND FRIEND_ID = ?";
+        jdbcTemplate.update(sqlQuery, id, friendId);
+    }
+
+    @Override
+    public List<User> getCommonFriends(long userId, long otherId) {
+        String sqlQuery = "SELECT t1.FRIEND_ID FROM (SELECT * FROM FRIENDS WHERE FRIENDS.USER_ID = ? +" +
+                "and FRIENDS.STATUS = true) AS t1 " +
+                "+ JOIN (SELECT * FROM FRIENDS WHERE USER_ID = ? and FRIENDS.STATUS = true) AS t2 +"
+                + "ON t1.FRIEND_ID = t2.FRIEND_ID";
+
+        return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, userId, otherId);
     }
 }

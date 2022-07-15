@@ -22,5 +22,10 @@ public class UserValidationService {
             log.error("Ошибка, валидация не пройдена. Логин не может быть пустым и содержать пробелы: {}", user.getLogin());
             throw new ValidationException("Ошибка, валидация не пройдена. Логин не может быть пустым и содержать пробелы.");
         }
+        if (user.getBirthday().isAfter(currentMoment)) {
+            log.error("Ошибка, валидация не пройдена. Дата рождения не может быть в будущем: {}", user.getBirthday());
+            throw new ValidationException("Ошибка, валидация не пройдена. Дата рождения не может быть в будущем.");
+        }
+
     }
 }
