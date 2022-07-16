@@ -5,11 +5,8 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.*;
 
-@Getter
-@Setter
-@ToString
+@Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Film {
     private long id;
     private String name;

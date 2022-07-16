@@ -60,7 +60,7 @@ public class FilmService {
 
     }
 
-    public List<Film> getCountPopularFilms(Integer count) {
+    public List<Film> getPopularFilmsCount(Integer count) {
         return filmStorage.getPopularFilms(count);
     }
 }

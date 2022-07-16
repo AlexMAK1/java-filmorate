@@ -63,26 +63,17 @@ public class UserDbStorage implements UserStorage {
             throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
         }
         final String sqlQuery = "select * from USERS where USER_ID = ?";
-        final List<User> users = jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, id);
+        final List<User> users = jdbcTemplate.query(sqlQuery, this::makeUser, id);
         if (users.size() != 1) {
             // TODO not found
         }
         return users.get(0);
     }
 
-    private static User makeUser(ResultSet rs, int rowNum) throws SQLException {
-        return new User(rs.getLong("USER_ID"),
-                rs.getString("EMAIL"),
-                rs.getString("LOGIN"),
-                rs.getString("USER_NAME"),
-                rs.getDate("BIRTHDAY").toLocalDate());
-    }
-
     @Override
     public List<User> getUsers() {
         final String sqlQuery = "select * from USERS";
-        final List<User> users = jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser);
-        return users;
+        return jdbcTemplate.query(sqlQuery, this::makeUser);
     }
 
     @Override
@@ -128,12 +119,20 @@ public class UserDbStorage implements UserStorage {
                 "where u.FRIEND_ID = o.FRIEND_ID " +
                 "and u.USER_ID = ? " +
                 "and o.USER_ID = ?)";
-        return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, userId, otherId);
+        return jdbcTemplate.query(sqlQuery, this::makeUser, userId, otherId);
     }
 
     @Override
     public List<User> getUserFriends(long userId) {
         final String sqlQuery = "SELECT * FROM USERS WHERE USER_ID IN (SELECT FRIEND_ID FROM FRIENDS WHERE USER_ID = ?)";
-        return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, userId);
+        return jdbcTemplate.query(sqlQuery, this::makeUser, userId);
+    }
+
+    private User makeUser(ResultSet rs, int rowNum) throws SQLException {
+        return new User(rs.getLong("USER_ID"),
+                rs.getString("EMAIL"),
+                rs.getString("LOGIN"),
+                rs.getString("USER_NAME"),
+                rs.getDate("BIRTHDAY").toLocalDate());
     }
 }

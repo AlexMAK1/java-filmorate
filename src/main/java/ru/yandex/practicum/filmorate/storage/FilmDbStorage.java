@@ -6,9 +6,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.FilmValidationService;
 
 import java.sql.*;
@@ -21,14 +23,13 @@ import java.util.Set;
 public class FilmDbStorage implements FilmStorage {
 
     private final FilmValidationService filmValidationService;
-    private static MpaDbStorage mpaDbStorage;
+
     private final GenreDBStorage genreDBStorage;
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public FilmDbStorage(FilmValidationService filmValidationService, MpaDbStorage mpaDbStorage, GenreDBStorage genreDBStorage, JdbcTemplate jdbcTemplate) {
+    public FilmDbStorage(FilmValidationService filmValidationService, GenreDBStorage genreDBStorage, JdbcTemplate jdbcTemplate) {
         this.filmValidationService = filmValidationService;
-        this.mpaDbStorage = mpaDbStorage;
         this.genreDBStorage = genreDBStorage;
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -39,10 +40,11 @@ public class FilmDbStorage implements FilmStorage {
             log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", id);
             throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
         }
-        final String sqlQuery = "select * from FILMS where FILM_ID = ?";
-        final List<Film> films = jdbcTemplate.query(sqlQuery, FilmDbStorage::makeFilm, id);
+        final String sqlQuery = "SELECT * FROM FILMS JOIN MPA ON FILMS.MPA_ID = MPA.MPA_ID where FILM_ID = ?";
+        final List<Film> films = jdbcTemplate.query(sqlQuery, this::makeFilm, id);
         if (films.size() != 1) {
-            // TODO not found
+            log.error("Ошибка, таблица FILMS пустая.");
+            throw new NotFoundException("Ошибка, таблица FILMS пустая.");
         }
         Film film = films.get(0);
         Set<Genre> genres = genreDBStorage.getFilmGenres(film.getId());
@@ -53,22 +55,13 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getFilms() {
-        String sqlQuery = "SELECT * FROM FILMS";
-        final List<Film> films = jdbcTemplate.query(sqlQuery, FilmDbStorage::makeFilm);
+        String sqlQuery = "SELECT * FROM FILMS JOIN MPA ON FILMS.MPA_ID = MPA.MPA_ID";
+        final List<Film> films = jdbcTemplate.query(sqlQuery, this::makeFilm);
         for (Film film : films) {
             genreDBStorage.getFilmGenres(film.getId());
 
         }
         return films;
-    }
-
-    static Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
-        return new Film(rs.getLong("FILM_ID"),
-                rs.getString("FILM_NAME"),
-                rs.getString("DESCRIPTION"),
-                rs.getDate("RELEASE_DATE").toLocalDate(),
-                rs.getInt("DURATION"),
-                mpaDbStorage.getMpa(rs.getInt("MPA_ID")));
     }
 
     @Override
@@ -159,10 +152,20 @@ public class FilmDbStorage implements FilmStorage {
                 + " GROUP BY FILM_ID) l ON f.FILM_ID = l.FILM_ID LEFT JOIN MPA ON f.MPA_ID = MPA.MPA_ID"
                 + " ORDER BY l.likes_count DESC LIMIT ?";
 
-        final List<Film> films = jdbcTemplate.query(sqlQuery, FilmDbStorage::makeFilm, count);
-        for (Film film: films) {
+        final List<Film> films = jdbcTemplate.query(sqlQuery, this::makeFilm, count);
+        for (Film film : films) {
             film.setGenres(genreDBStorage.getFilmGenres(film.getId()));
         }
         return films;
     }
+
+    private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
+        return new Film(rs.getLong("FILM_ID"),
+                rs.getString("FILM_NAME"),
+                rs.getString("DESCRIPTION"),
+                rs.getDate("RELEASE_DATE").toLocalDate(),
+                rs.getInt("DURATION"),
+                new Mpa(rs.getInt("MPA.MPA_ID"), rs.getString("MPA.MPA_NAME")));
+    }
+
 }

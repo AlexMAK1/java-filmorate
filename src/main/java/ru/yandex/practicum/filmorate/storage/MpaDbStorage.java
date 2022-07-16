@@ -25,12 +25,7 @@ public class MpaDbStorage implements MpaStorage{
     @Override
     public List<Mpa> getMpas() {
         final  String sqlQuery = "select * from MPA";
-        return jdbcTemplate.query(sqlQuery, MpaDbStorage :: makeMpa);
-    }
-
-    private static Mpa makeMpa(ResultSet rs, int rowNum) throws SQLException {
-        return new Mpa(rs.getInt("MPA_ID"),
-                rs.getString("MPA_NAME"));
+        return jdbcTemplate.query(sqlQuery, this :: makeMpa);
     }
 
     @Override
@@ -40,7 +35,12 @@ public class MpaDbStorage implements MpaStorage{
             throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
         }
         final String sqlQuery = "select * from MPA where MPA_ID = ?";
-        final List<Mpa> mpas = jdbcTemplate.query(sqlQuery, MpaDbStorage :: makeMpa, id);
+        final List<Mpa> mpas = jdbcTemplate.query(sqlQuery, this :: makeMpa, id);
         return mpas.get(0);
+    }
+
+    private Mpa makeMpa(ResultSet rs, int rowNum) throws SQLException {
+        return new Mpa(rs.getInt("MPA_ID"),
+                rs.getString("MPA_NAME"));
     }
 }

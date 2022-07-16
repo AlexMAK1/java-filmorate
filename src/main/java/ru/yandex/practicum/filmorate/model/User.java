@@ -4,12 +4,9 @@ import lombok.*;
 
 import java.time.LocalDate;
 
-@Getter
-@Setter
-@ToString
-@EqualsAndHashCode
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class User {
     private long id;
     private String email;

@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -63,6 +64,6 @@ public class FilmController {
         if (count <= 0) {
             throw new IncorrectParameterException("count");
         }
-        return filmService.getCountPopularFilms(count);
+        return filmService.getPopularFilmsCount(count);
     }
 }
