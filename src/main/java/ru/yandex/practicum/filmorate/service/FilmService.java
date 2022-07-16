@@ -37,9 +37,8 @@ public class FilmService {
     }
 
     public void addLike(long id, long userId) {
-        Film film = findFilmById(id);
         log.info("Добавляем лайк фильму {}", id);
-
+        filmStorage.addLike(id, userId);
     }
 
     public Film findFilmById(Long id) {
@@ -56,13 +55,12 @@ public class FilmService {
             log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", userId);
             throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
         }
-        Film film = findFilmById(id);
         log.info("Удаляем лайк у фильма {}", id);
+        filmStorage.deleteLike(id, userId);
 
     }
 
-    public List<Film> getCountPopularFilms(Long count) {
-        List<Film> popularFilms = new ArrayList<>(filmStorage.getFilms());
-        return popularFilms;
+    public List<Film> getCountPopularFilms(Integer count) {
+        return filmStorage.getPopularFilms(count);
     }
 }

@@ -57,11 +57,9 @@ public class UserService {
     }
 
     public List<User> getFriends(long id) {
-        List<User> friends = new ArrayList<>();
-        User user = userStorage.getUser(id);
-        Set<Long> friendsId;
-        log.info("Находим друзей Юзера: {}, список друзей :{}", id, friends);
-        return friends;
+        log.info("Находим друзей Юзера: {}, список друзей :{}", id, userStorage.getUserFriends(id));
+        return userStorage.getUserFriends(id);
+
     }
 
     public List<User> getCommonFriends(long id, long otherId) {

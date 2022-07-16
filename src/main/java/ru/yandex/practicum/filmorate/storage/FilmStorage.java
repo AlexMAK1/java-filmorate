@@ -17,4 +17,10 @@ public interface FilmStorage {
     void setFilmGenre(Film film);
 
     void updateFilmGenre(Film film);
+
+    void addLike(long id, long userId);
+
+    void deleteLike(long id, long userId);
+
+    List<Film> getPopularFilms(Integer count);
 }

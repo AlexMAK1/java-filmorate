@@ -14,13 +14,14 @@ import ru.yandex.practicum.filmorate.service.FilmValidationService;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Repository
 public class FilmDbStorage implements FilmStorage {
 
     private final FilmValidationService filmValidationService;
-    private final MpaDbStorage mpaDbStorage;
+    private static MpaDbStorage mpaDbStorage;
     private final GenreDBStorage genreDBStorage;
     private final JdbcTemplate jdbcTemplate;
 
@@ -44,9 +45,9 @@ public class FilmDbStorage implements FilmStorage {
             // TODO not found
         }
         Film film = films.get(0);
-        List<Genre> genres = genreDBStorage.getFilmGenres(film.getId());
+        Set<Genre> genres = genreDBStorage.getFilmGenres(film.getId());
         film.setGenres(genres);
-        mpaDbStorage.getMpa(film.getMpa().getId());
+
         return film;
     }
 
@@ -56,17 +57,18 @@ public class FilmDbStorage implements FilmStorage {
         final List<Film> films = jdbcTemplate.query(sqlQuery, FilmDbStorage::makeFilm);
         for (Film film : films) {
             genreDBStorage.getFilmGenres(film.getId());
-            mpaDbStorage.getMpa(film.getMpa().getId());
+
         }
         return films;
     }
 
-    private static Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
+    static Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
         return new Film(rs.getLong("FILM_ID"),
                 rs.getString("FILM_NAME"),
-                rs.getDate("RELEASE_DATE").toLocalDate(),
                 rs.getString("DESCRIPTION"),
-                rs.getInt("DURATION"));
+                rs.getDate("RELEASE_DATE").toLocalDate(),
+                rs.getInt("DURATION"),
+                mpaDbStorage.getMpa(rs.getInt("MPA_ID")));
     }
 
     @Override
@@ -101,7 +103,9 @@ public class FilmDbStorage implements FilmStorage {
             log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", film.getId());
             throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
         }
-        String sqlQuery = "update FILMS set " + "FILM_NAME = ?, DESCRIPTION = ?, RELEASE_DATE = ?, DURATION = ?, MPA_ID =?" + "where FILM_ID = ?";
+        String sqlQuery = "update FILMS set  "
+                + "FILM_NAME = ?, DESCRIPTION = ?, RELEASE_DATE = ?, DURATION = ?, MPA_ID =?"
+                + "where FILM_ID = ? ";
         jdbcTemplate.update(sqlQuery,
                 film.getName(),
                 film.getDescription(),
@@ -112,9 +116,9 @@ public class FilmDbStorage implements FilmStorage {
         );
         updateFilmGenre(film);
         log.info("Добовляем пользователя: {}", film);
+        film.setGenres(genreDBStorage.getFilmGenres(film.getId()));
         return film;
     }
-
 
 
     @Override
@@ -126,8 +130,7 @@ public class FilmDbStorage implements FilmStorage {
                 stmt.setLong(1, film.getId());
                 stmt.setInt(2, genre.getId());
                 return stmt;
-            })
-            ;
+            });
         }
     }
 
@@ -136,5 +139,30 @@ public class FilmDbStorage implements FilmStorage {
         String sqlQuery = "DELETE FROM FILM_GENRES where FILM_ID = ?";
         jdbcTemplate.update(sqlQuery, film.getId());
         setFilmGenre(film);
+    }
+
+    @Override
+    public void addLike(long id, long userId) {
+        String sqlQuery = "INSERT INTO LIKES (FILM_ID, USER_ID) values (?, ?)";
+        jdbcTemplate.update(sqlQuery, id, userId);
+    }
+
+    @Override
+    public void deleteLike(long id, long userId) {
+        String sqlQuery = "DELETE FROM LIKES where FILM_ID = ? and USER_ID = ?";
+        jdbcTemplate.update(sqlQuery, id, userId);
+    }
+
+    @Override
+    public List<Film> getPopularFilms(Integer count) {
+        final String sqlQuery = "SELECT * FROM FILMS f LEFT JOIN (SELECT FILM_ID, COUNT(*) likes_count FROM LIKES"
+                + " GROUP BY FILM_ID) l ON f.FILM_ID = l.FILM_ID LEFT JOIN MPA ON f.MPA_ID = MPA.MPA_ID"
+                + " ORDER BY l.likes_count DESC LIMIT ?";
+
+        final List<Film> films = jdbcTemplate.query(sqlQuery, FilmDbStorage::makeFilm, count);
+        for (Film film: films) {
+            film.setGenres(genreDBStorage.getFilmGenres(film.getId()));
+        }
+        return films;
     }
 }

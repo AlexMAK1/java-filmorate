@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS FRIENDS
 (
     USER_ID   INT REFERENCES USERS (USER_ID),
     FRIEND_ID INT REFERENCES USERS (USER_ID),
-    STATUS    BOOLEAN,
     PRIMARY KEY (USER_ID, FRIEND_ID)
 );
 
@@ -53,3 +52,21 @@ CREATE TABLE IF NOT EXISTS LIKES
     PRIMARY KEY (FILM_ID, USER_ID)
 );
 
+merge into GENRES (GENRE_ID, GENRE_NAME)
+    values ( 1, 'Комедия' ),
+           (2, 'Драма'),
+           (3, 'Мультфильм'),
+           (4, 'Триллер'),
+           (5, 'Документальный'),
+           (6, 'Боевик');
+
+merge into MPA (MPA_ID, MPA_NAME)
+    values ( 1,  'G'),
+           (2,'PG'),
+           (3, 'PG-13'),
+           (4, 'R'),
+           (5, 'NC-17');
+
+insert into USERS (EMAIL, LOGIN, USER_NAME, BIRTHDAY) VALUES ( 'yandex@ya.ru', 'dolar', 'Nik', '1985-10-10' );
+
+insert into FILMS (FILM_NAME, DESCRIPTION, RELEASE_DATE, DURATION, MPA_ID) VALUES ( 'New film', 'New film about friends', '1999-04-30', '120', '3' );

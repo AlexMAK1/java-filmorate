@@ -18,7 +18,6 @@ import java.util.Collection;
 @RequestMapping("/genres")
 public class GenreController {
 
-
     private final GenreService genreService;
 
     @Autowired

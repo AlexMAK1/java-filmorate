@@ -9,8 +9,10 @@ import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Repository
@@ -37,19 +39,19 @@ public class GenreDBStorage implements GenreStorage {
     }
 
     @Override
-    public List<Genre> getFilmGenres(long id) {
-        List<Genre> genres;
+    public Set<Genre> getFilmGenres(long id) {
+        Set<Genre> genres;
         try {
             if (id < 0) {
                 log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", id);
                 throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
             }
-            final String sqlQuery = "SELECT * FROM GENRES WHERE GENRE_ID IN (SELECT FILM_GENRES.GENRE_ID FROM FILM_GENRES WHERE FILM_ID = ?)";
-            genres = new LinkedList<>(jdbcTemplate.query(sqlQuery, GenreDBStorage::makeGenre, id));
+            final String sqlQuery = "SELECT * FROM GENRES WHERE GENRE_ID IN (SELECT FILM_GENRES.GENRE_ID FROM FILM_GENRES WHERE FILM_ID = ?) ORDER BY GENRE_ID";
+            genres = new LinkedHashSet<>(jdbcTemplate.query(sqlQuery, GenreDBStorage::makeGenre, id));
+            return genres;
         } catch (Throwable e) {
             throw new ValidationException(e.getMessage());
         }
-        return genres;
     }
 
     private static Genre makeGenre(ResultSet rs, int rowNum) throws SQLException {

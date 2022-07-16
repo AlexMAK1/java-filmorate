@@ -58,7 +58,7 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> findCountPopularFilms(
-            @RequestParam(defaultValue = DEFAULT_FILMS_AMOUNT) Long count
+            @RequestParam(defaultValue = DEFAULT_FILMS_AMOUNT) Integer count
     ) {
         if (count <= 0) {
             throw new IncorrectParameterException("count");

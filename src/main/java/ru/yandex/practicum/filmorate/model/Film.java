@@ -17,14 +17,15 @@ public class Film {
     private String description;
     private int duration;
     private Mpa mpa;
-    private List<Genre> genres = new LinkedList<>();
+    private Set<Genre> genres = new LinkedHashSet<>();
 
-    public Film(long id, String name, LocalDate releaseDate, String description, int duration) {
+    public Film(long id, String name, String description, LocalDate releaseDate, int duration, Mpa mpa) {
         this.id = id;
         this.name = name;
         this.releaseDate = releaseDate;
         this.description = description;
         this.duration = duration;
+        this.mpa = mpa;
     }
 
     @Override

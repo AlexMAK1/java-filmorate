@@ -104,6 +104,15 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void addFriend(long id, long friendId) {
+        if (id < 0) {
+            log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", id);
+            throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
+        }
+        if (friendId < 0) {
+            log.error("Ошибка, валидация не пройдена. Id не может быть отрицательным: {}", id);
+            throw new NotFoundException("Ошибка, валидация не пройдена. Id не может быть отрицательным.");
+        }
+
         String sqlQuery = "INSERT INTO FRIENDS (USER_ID, FRIEND_ID) values (?, ?)" ;
         jdbcTemplate.update(sqlQuery,id, friendId);
     }
@@ -114,13 +123,17 @@ public class UserDbStorage implements UserStorage {
         jdbcTemplate.update(sqlQuery, id, friendId);
     }
 
-    @Override
     public List<User> getCommonFriends(long userId, long otherId) {
-        String sqlQuery = "SELECT t1.FRIEND_ID FROM (SELECT * FROM FRIENDS WHERE FRIENDS.USER_ID = ? +" +
-                "and FRIENDS.STATUS = true) AS t1 " +
-                "+ JOIN (SELECT * FROM FRIENDS WHERE USER_ID = ? and FRIENDS.STATUS = true) AS t2 +"
-                + "ON t1.FRIEND_ID = t2.FRIEND_ID";
-
+        final String sqlQuery = "SELECT * FROM USERS WHERE USER_ID IN (select u.FRIEND_ID from FRIENDS u, FRIENDS o " +
+                "where u.FRIEND_ID = o.FRIEND_ID " +
+                "and u.USER_ID = ? " +
+                "and o.USER_ID = ?)";
         return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, userId, otherId);
+    }
+
+    @Override
+    public List<User> getUserFriends(long userId) {
+        final String sqlQuery = "SELECT * FROM USERS WHERE USER_ID IN (SELECT FRIEND_ID FROM FRIENDS WHERE USER_ID = ?)";
+        return jdbcTemplate.query(sqlQuery, UserDbStorage::makeUser, userId);
     }
 }
