@@ -26,5 +26,6 @@ public class UserValidationService {
             log.error("Ошибка, валидация не пройдена. Дата рождения не может быть в будущем: {}", user.getBirthday());
             throw new ValidationException("Ошибка, валидация не пройдена. Дата рождения не может быть в будущем.");
         }
+
     }
 }

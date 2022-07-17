@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -27,7 +28,7 @@ public class FilmController {
     @GetMapping
     public Collection<Film> findAll() {
         log.info("Текущее количество фильмов: {}", filmService.getFilms().size());
-        return filmService.getFilms().values();
+        return filmService.getFilms();
     }
 
     @GetMapping("{id}")
@@ -58,11 +59,11 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> findCountPopularFilms(
-            @RequestParam(defaultValue = DEFAULT_FILMS_AMOUNT) Long count
+            @RequestParam(defaultValue = DEFAULT_FILMS_AMOUNT) Integer count
     ) {
         if (count <= 0) {
             throw new IncorrectParameterException("count");
         }
-        return filmService.getCountPopularFilms(count);
+        return filmService.getPopularFilmsCount(count);
     }
 }
